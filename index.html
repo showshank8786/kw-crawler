@@ -1,0 +1,156 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+        <style>
+            #google-maps-icon {
+                position: absolute;
+                top: 90px;
+                right: 20px;
+                z-index: 1000;
+                cursor: pointer;
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 5px;
+                border-radius: 5px;
+                border-style: solid;
+                border-color: grey;
+                border-width: 2px;
+            }
+            #geoserver-icon {
+                position: absolute;
+                top: 160px;
+                right: 20px;
+                z-index: 1000;
+                cursor: pointer;
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 5px;
+                border-radius: 5px;
+                border-width: 2px;
+                border-style: solid;
+                border-color: grey;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map" style="height: 880px"></div>
+        <div id="zoom-level" style="position: absolute; top: 10px; right: 120px; z-index: 1000; background-color: rgba(255, 255, 255, 0.8); padding: 5px; border-radius: 5px; border-style: solid; border-color: grey; border-width: 2px;">
+            Zoom Level: <span id="zoom-value"></span>
+        </div>
+        <div id="bounding-box" style="position: absolute; top: 10px; right: 280px; z-index: 1000; background-color: rgba(255, 255, 255, 0.8); padding: 5px; border-radius: 5px; border-style: solid; border-color: grey; border-width: 2px;">
+            Bounding Box: <span id="bbox-value"></span>
+        </div>
+        <img id="google-maps-icon" src="Google_Maps.svg" alt="Google Maps" width="32" height="32" />
+
+        <img id="geoserver-icon" src="geoserver-logo.png" alt="GeoServer" width="32" height="32" />
+
+        <script>
+            document.getElementById('geoserver-icon').addEventListener('click', function() {
+                window.open('http://localhost:18080/geoserver/', '_blank');
+                updateZoomLevel();
+            });
+            function saveMapState() {
+                var mapState = {
+                    center: map.getCenter(),
+                    zoom: map.getZoom()
+                };
+                localStorage.setItem('mapState', JSON.stringify(mapState));
+            }
+
+            function updateURL() {
+                var center = map.getCenter();
+                var zoom = map.getZoom();
+                var hash = `#${center.lat},${center.lng},${zoom}`;
+                history.replaceState(null, null, hash);
+            }
+
+            function loadMapState() {
+                var hash = window.location.hash;
+                if (hash) {
+                    var parts = hash.replace('#', '').split(',');
+                    if (parts.length === 3) {
+                        var lat = parseFloat(parts[0]);
+                        var lng = parseFloat(parts[1]);
+                        var zoom = parseInt(parts[2], 10);
+                        map.setView([lat, lng], zoom);
+                        return;
+                    }
+                }
+
+                var mapState = localStorage.getItem('mapState');
+                if (mapState) {
+                    mapState = JSON.parse(mapState);
+                    map.setView(mapState.center, mapState.zoom);
+                } else {
+                    var bounds = L.latLngBounds([
+                        [52.667, 17.817], // Southwest corner (approximate)
+                        [53.267, 19.200]  // Northeast corner (approximate)
+                    ]);
+                    map.fitBounds(bounds);
+                }
+            }
+
+            var map = L.map('map', {
+                wheelPxPerZoomLevel: 120,
+                wheelDebounceTime: 20,
+            })
+
+            function updateZoomLevel() {
+                document.getElementById('zoom-value').textContent = map.getZoom();
+            }
+
+            function updateBoundingBox() {
+                var bounds = map.getBounds();
+                var sw = bounds.getSouthWest();
+                var ne = bounds.getNorthEast();
+                var swPoint = map.project(sw, map.getZoom());
+                var nePoint = map.project(ne, map.getZoom());
+                document.getElementById('bbox-value').textContent = `SW: (${swPoint.x.toFixed(2)}, ${swPoint.y.toFixed(2)}), NE: (${nePoint.x.toFixed(2)}, ${nePoint.y.toFixed(2)})`;
+            }
+
+            loadMapState();
+            updateBoundingBox();
+            updateZoomLevel();
+
+            var osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 22,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+            const mywms = L.tileLayer.wms("http://localhost:18080/geoserver/local/wms", {
+                layers: 'local:my_geometries',
+                format: 'image/png',
+                maxZoom: 22,
+                transparent: true,
+                opacity: 0.5,
+                version: '1.1.0',
+                attribution: "kw layer",
+            });
+            mywms.addTo(map);
+
+            var baseLayers = {
+                "OpenStreetMap": osmLayer
+            };
+            var overlayLayers = {
+                "My WMS Layer": mywms
+            };
+
+            L.control.layers(baseLayers, overlayLayers).addTo(map);
+
+            map.on('moveend', function() {
+                saveMapState();
+                updateURL();
+                updateBoundingBox();
+            });
+
+            map.on('zoomend', updateZoomLevel);
+
+            window.addEventListener('beforeunload', saveMapState);
+
+            document.getElementById('google-maps-icon').addEventListener('click', function() {
+                var center = map.getCenter();
+                var url = `https://www.google.com/maps/@${center.lat},${center.lng},${map.getZoom()}z`;
+                window.open(url, '_blank');
+            });
+        </script>
+    </body>
+</html>

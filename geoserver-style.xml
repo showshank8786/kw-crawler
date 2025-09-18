@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StyledLayerDescriptor version="1.0.0"
+    xmlns="http://www.opengis.net/sld"
+    xmlns:ogc="http://www.opengis.net/ogc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.opengis.net/sld http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd">
+    
+    <NamedLayer>
+        <Name>my_geometries</Name>
+        <UserStyle>
+            <Title>Type-based styling</Title>
+            <FeatureTypeStyle>
+                <Rule>
+                    <ogc:Filter>
+                        <ogc:PropertyIsEqualTo>
+                            <ogc:PropertyName>owner_type</ogc:PropertyName>
+                            <ogc:Literal>default</ogc:Literal>
+                        </ogc:PropertyIsEqualTo>
+                    </ogc:Filter>
+                    <PolygonSymbolizer>
+                        <Fill>
+                            <CssParameter name="fill">#AAAAAA</CssParameter>
+                        </Fill>
+                        <Stroke>
+                            <CssParameter name="stroke">#000000</CssParameter>
+                            <CssParameter name="stroke-width">1</CssParameter>
+                        </Stroke>
+                    </PolygonSymbolizer>
+                </Rule>
+                <!-- Label the geometries -->
+                <Rule>
+                    <TextSymbolizer>
+                        <Label>
+                            <ogc:PropertyName>description</ogc:PropertyName>
+                        </Label>
+                        <Font>
+                            <CssParameter name="font-family">Arial</CssParameter>
+                            <CssParameter name="font-size">10</CssParameter>
+                            <CssParameter name="font-style">normal</CssParameter>
+                            <CssParameter name="font-weight">bold</CssParameter>
+                        </Font>
+                        <LabelPlacement>
+                            <PointPlacement>
+                                <AnchorPoint>
+                                    <AnchorPointX>0.5</AnchorPointX>
+                                    <AnchorPointY>0.5</AnchorPointY>
+                                </AnchorPoint>
+                            </PointPlacement>
+                        </LabelPlacement>
+                        <Halo>
+                            <Radius>2</Radius>
+                            <Fill>
+                                <CssParameter name="fill">#FFFFFF</CssParameter>
+                            </Fill>
+                        </Halo>
+                        <Fill>
+                            <CssParameter name="fill">#000000</CssParameter>
+                        </Fill>
+                        <VendorOption name="spaceAround">-10</VendorOption>
+                        <VendorOption name="maxDisplacement">20</VendorOption>
+                        <VendorOption name="polygonAlign">mbr</VendorOption>
+                        <VendorOption name="autoWrap">60</VendorOption>
+                    </TextSymbolizer>
+                </Rule>
+            </FeatureTypeStyle>
+        </UserStyle>
+    </NamedLayer>
+</StyledLayerDescriptor>

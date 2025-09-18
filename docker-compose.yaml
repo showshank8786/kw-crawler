@@ -1,0 +1,29 @@
+services:
+  postgis:
+    image: postgis/postgis:17-3.5
+    container_name: postgis
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    restart: always
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.26.0
+    # user: admin
+    # password: geoserver
+    container_name: geoserver
+    ports:
+      - "18080:8080"
+    volumes:
+      - geoserver_data:/opt/geoserver_data
+    restart: always
+
+volumes:
+  postgis_data:
+  geoserver_data:
+networks:
+  default:
